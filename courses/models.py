@@ -1,5 +1,8 @@
 from django.db import models
 from accounts.models import Teacher, Student
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+import os
 
 #----------------------course-------------------------
 class Course(models.Model):
@@ -42,4 +45,10 @@ class CourseFeedback(models.Model):
     def __str__(self):
         return f"Feedback by {self.student.user.real_name} for {self.course.title}"
 
-
+#--------------------delete file ------------------------
+@receiver(post_delete, sender=CourseMaterial)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    #delete file from server when coursematerial object is deleted from db
+    if instance.file:
+        if os.path.isfile(instance.file.path):
+            os.remove(instance.file.path)
