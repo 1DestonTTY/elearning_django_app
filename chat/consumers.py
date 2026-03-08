@@ -42,7 +42,7 @@ class ChatConsumer(WebsocketConsumer):
 
     #this function is triggered by group_send to push the message out to the web page
     def chat_message(self, event):
-        message = event['message'],
+        message = event['message']
         username = event['username']
 
         self.send(text_data=json.dumps({
