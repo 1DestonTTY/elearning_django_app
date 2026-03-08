@@ -7,10 +7,10 @@ class CourseAppTests(TestCase):
     def setUp(self):
         #set up dummy users
         self.teacher_user = User.objects.create_user(username='teacher1', password='pw', is_teacher=True)
-        self.teacher_profile = Teacher.objects.create(user=self.teacher_user)
-        
         self.student_user = User.objects.create_user(username='student1', password='pw', is_student=True)
-        self.student_profile = Student.objects.create(user=self.student_user)
+        
+        self.teacher_profile = self.teacher_user.teacher
+        self.student_profile = self.student_user.student
         
         #set up a dummy course
         self.course = Course.objects.create(

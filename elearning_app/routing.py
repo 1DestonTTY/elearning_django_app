@@ -25,11 +25,10 @@ from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 import chat.routing
 
-# This is the "missing attribute" the error was screaming about!
 websocket_urlpatterns = chat.routing.websocket_urlpatterns
 
 application = ProtocolTypeRouter({
-    # 3. Add this line so normal web pages work!
+    #allow normal local web page to access
     "http": django_asgi_app,
     
     "websocket": AuthMiddlewareStack(
