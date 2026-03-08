@@ -13,8 +13,24 @@
             </div>
             
             <div class="card-body bg-light">
-                <div id="chat-log" class="form-control bg-white mb-3 shadow-sm p-3" style="height: 300px; overflow-y: auto;"></div>
-                
+                <div id="chat-log" class="form-control bg-white mb-3 shadow-sm p-3" style="height: 300px; overflow-y: auto;">
+                    {% for msg in chat_history %}
+                        {% if msg.sender == request.user %}
+                            <div class="d-flex mb-3 justify-content-end">
+                                <div class="p-2 rounded shadow-sm text-break bg-primary text-white" style="max-width: 70%;">
+                                    <strong>You:</strong><br>{{ msg.content }}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="d-flex mb-3 justify-content-start">
+                                <div class="p-2 rounded shadow-sm text-break bg-light text-dark border" style="max-width: 70%;">
+                                    <small class="text-muted fw-bold d-block mb-1">{{ msg.sender.username }}</small>{{ msg.content }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div> 
+
                 <div class="input-group shadow-sm">
                     <input id="chat-message-input" type="text" class="form-control form-control-lg" placeholder="Type your message here...">
                     <button id="chat-message-submit" class="btn btn-primary px-4 fw-bold" type="button">Send</button>
@@ -33,8 +49,8 @@
 
 <script>
     const roomName = JSON.parse(document.getElementById('room-name').textContent);
-    const currentUser = "{{ user.real_name|default:user.username|escapejs }}";
-
+    const currentUser = "{{ request.user.username|escapejs }}";
+    
     //opens the tunnel to daphne and redis
     const chatSocket = new WebSocket(
         'ws://' + window.location.host + '/ws/' + roomName + '/'

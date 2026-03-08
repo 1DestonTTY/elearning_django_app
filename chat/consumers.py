@@ -1,6 +1,7 @@
 import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from .models import ChatMessage
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -36,13 +37,19 @@ class ChatConsumer(WebsocketConsumer):
 
         username = text_data_json.get('username', 'Anonymous')
 
+        ChatMessage.objects.create(
+            room_name=self.room_name,
+            sender=self.scope['user'], 
+            content=message
+        )
+
         #broadcast message to the entire redis group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
                 'type': 'chat_message',
                 'message': message,
-                'username': username,
+                'username': self.scope['user'].username
             }
         )
 
