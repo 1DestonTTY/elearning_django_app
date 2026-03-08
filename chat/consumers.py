@@ -4,7 +4,13 @@ from channels.generic.websocket import WebsocketConsumer
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        #get room name from the URL
+        #check is user logged in or not
+        if self.scope['user'].is_anonymous:
+            #if they are not logged in, immediately reject the WebSocket handshake
+            self.close()
+            return
+        
+        #get room name from the URLs
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
 
