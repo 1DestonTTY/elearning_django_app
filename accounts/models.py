@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save 
+from django.dispatch import receiver
 
 #----------base user (login, permission)-----------
 class User(AbstractUser):
@@ -41,3 +43,16 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.recipient.username}: {self.message}"
+
+#-------------------signals-----------------
+@receiver(post_save, sender=User)
+def manage_user_profiles(sender, instance, **kwargs):
+    """
+    Tripwire: Automatically creates a profile the moment a user is saved.
+    Using get_or_create prevents crashes if the profile already exists!
+    """
+    if instance.is_teacher:
+        Teacher.objects.get_or_create(user=instance)
+        
+    if instance.is_student:
+        Student.objects.get_or_create(user=instance)
