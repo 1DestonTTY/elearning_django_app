@@ -29,7 +29,10 @@ import chat.routing
 websocket_urlpatterns = chat.routing.websocket_urlpatterns
 
 application = ProtocolTypeRouter({
-    'websocket': AuthMiddlewareStack(
+    # 3. Add this line so normal web pages work!
+    "http": django_asgi_app,
+    
+    "websocket": AuthMiddlewareStack(
         URLRouter(
             websocket_urlpatterns
         )

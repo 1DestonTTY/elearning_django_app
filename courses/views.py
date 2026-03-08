@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Course, CourseMaterial, CourseFeedback, Enrollment
+from .models import Course, CourseMaterial, Enrollment
 from .forms import CourseCreationForm, CourseMaterialForm, CourseFeedbackForm
 from accounts.models import Student, Notification
+from django.core.exceptions import PermissionDenied
 
 #-----------------course create----------------------
 @login_required
@@ -100,15 +101,18 @@ def course_detail(request, course_id):
 @login_required
 def delete_material(request, material_id):
     material = get_object_or_404(CourseMaterial, id=material_id)
-    course = material.course
     
-    #only the teacher of exact course can delete 
-    if request.user.is_teacher and course.teacher.user == request.user:
-        if request.method == 'POST':
-            material.delete()
-            
-    #redirect back to the course detail page
-    return redirect('course_detail', course_id=course.id)
+    #only teach can access the delete material
+    if material.course.teacher != request.user.teacher:
+        raise PermissionDenied("You do not have permission to delete this material.")
+
+    if request.method == 'POST':
+        course_id = material.course.id
+        material.delete()
+        return redirect('course_detail', course_id=course_id)
+        
+    #send them back to course if no permission
+    return redirect('course_detail', course_id=material.course.id)
 
 #----------------course feedback------------------
 @login_required
