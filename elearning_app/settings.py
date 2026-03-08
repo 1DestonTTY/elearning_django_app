@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -159,12 +160,17 @@ LOGIN_REDIRECT_URL = 'home'
 #send users after they log out
 LOGOUT_REDIRECT_URL = 'login'
 
+#assuming we are on the production server by default
+REDIS_HOST = 'redis'
+if 'runserver' in sys.argv:
+    REDIS_HOST = '127.0.0.1'
+
 #websocket channel layer using redis
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)], #standard local redis port
+            "hosts": [(REDIS_HOST, 6379)], #standard local redis port
         },
     },
 }
