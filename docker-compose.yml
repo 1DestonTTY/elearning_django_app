@@ -4,8 +4,17 @@ services:
   web:
     build: .
     container_name: elearning_backend
-    command: python manage.py runserver 0.0.0.0:8000
+    #we use daphne to handle both regular web pages and WebSockets
+    command: daphne -b 0.0.0.0 -p 8000 elearning_app.asgi:application
     volumes:
       - .:/app
     ports:
       - "8000:8000"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: elearning_redis
+    ports:
+      - "6379:6379"
