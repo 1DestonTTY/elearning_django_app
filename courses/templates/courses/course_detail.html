@@ -1,0 +1,132 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="row mt-4 mb-5">
+    
+    <div class="col-md-{% if is_teacher %}8{% else %}12{% endif %}">
+        
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="card-title mb-0 fw-bold">{{ course.title }}</h2>
+                    <a href="{% url 'course_list' %}" class="btn btn-outline-secondary btn-sm">Back to Courses</a>
+                </div>
+                <h6 class="text-muted mb-3">Taught by {{ course.teacher.user.real_name }}</h6>
+                <p class="card-text">{{ course.description }}</p>
+
+                <hr>
+
+                <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                    <div>
+                        <h6 class="fw-bold mb-1">Live Course Chat</h6>
+                        <small class="text-muted">Discuss this course in real-time with your teacher and peers.</small>
+                    </div>
+                    <a href="{% url 'room' course.id %}" class="btn btn-primary fw-bold shadow-sm">
+                        Join Chat Room
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white fw-bold fs-5">
+                Course Materials
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for material in materials %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                            <a href="{{ material.file.url }}" target="_blank" class="text-decoration-none fw-bold">{{ material.title }}</a>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <small class="text-muted me-3">Uploaded: {{ material.uploaded_at|date:"M d, Y" }}</small>
+                            
+                            {% if is_teacher %}
+                            <form action="{% url 'delete_material' material.id %}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this material?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted fst-italic py-4 text-center">No materials have been uploaded yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white fw-bold fs-5">
+                Course Feedback
+            </div>
+            <div class="card-body">
+                
+                <div class="mb-4">
+                    {% for feedback in course.feedbacks.all %}
+                        <div class="card mb-3 border-start border-4 border-primary">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong>{{ feedback.student.user.real_name|default:feedback.student.user.username }}</strong>
+                                    <small class="text-muted">{{ feedback.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <p class="mb-0">{{ feedback.comment }}</p>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-light text-center fst-italic text-muted border" role="alert">
+                            No feedback yet. Be the first to share your thoughts!
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% if user.is_student and user.student in course.students.all %}
+                    <div class="card bg-light border-0">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 text-secondary">Leave Feedback</h6>
+                            <form action="{% url 'add_feedback' course.id %}" method="post">
+                                {% csrf_token %}
+                                {{ feedback_form.as_p }}
+                                <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+                
+            </div>
+        </div>
+        
+    </div>
+
+    {% if is_teacher %}
+    <div class="col-md-4">
+        
+        <div class="card shadow-sm border-0 mb-4 bg-light">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-3">Upload Material</h5>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-success w-100">Upload File</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 bg-light">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-3">Class Management</h5>
+                <p class="mb-3">
+                    <strong>Total Enrolled:</strong> 
+                    <span class="badge bg-primary rounded-pill ms-2 fs-6">{{ course.students.count }}</span>
+                </p>
+                <a href="{% url 'course_roster' course.id %}" class="btn btn-outline-dark w-100">
+                    Manage Student Roster
+                </a>
+            </div>
+        </div>
+        
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

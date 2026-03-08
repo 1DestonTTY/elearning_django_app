@@ -1,0 +1,75 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                {% if user.profile_photo %}
+                    <img src="{{ user.profile_photo.url }}" alt="Profile Photo" class="rounded-circle mb-3 border" style="width: 150px; height: 150px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-secondary rounded-circle d-inline-block mb-3" style="width: 150px; height: 150px;"></div>
+                {% endif %}
+                
+                <h4 class="card-title mb-1">{{ user.real_name|default:user.username }}</h4>
+                <p class="mb-3">
+                    {% if user.is_teacher %} <span class="badge bg-primary">Teacher</span>
+                    {% elif user.is_student %} <span class="badge bg-success">Student</span>
+                    {% else %} <span class="badge bg-secondary">Admin</span> {% endif %}
+                </p>
+                
+                <hr>
+                
+                <h6 class="text-muted">Current Status</h6>
+                <p class="fst-italic">"{{ user.status_update|default:'I am new here! Ready to learn.' }}"</p>
+                
+                <form method="post" action="{% url 'home' %}">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" name="status_text" class="form-control" placeholder="What are you up to?" maxlength="255" required>
+                        <button type="submit" class="btn btn-outline-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        
+        <div class="card shadow-sm mb-4 border-warning">
+            <div class="card-header bg-warning text-dark fw-bold">
+                Recent Notifications
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for note in user.notifications.all|dictsortreversed:"created_at"|slice:":5" %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ note.message }}
+                        <small class="text-muted">{{ note.created_at|timesince }} ago</small>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted fst-italic">You have no new notifications.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white fw-bold">
+                Your Dashboard
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 d-md-block">
+                    {% if user.is_teacher %}
+                        <a href="{% url 'create_course' %}" class="btn btn-primary mb-2 me-2">Create New Course</a>
+                        <a href="{% url 'course_list' %}" class="btn btn-info text-white mb-2 me-2">View All Courses</a>
+                        <a href="{% url 'user_search' %}" class="btn btn-secondary mb-2">Search Users</a>
+                    {% else %}
+                        <a href="{% url 'course_list' %}" class="btn btn-primary mb-2 me-2">Browse All Courses</a>
+                        <a href="{% url 'student_enrollments' %}" class="btn btn-info text-white mb-2">My Enrollments</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

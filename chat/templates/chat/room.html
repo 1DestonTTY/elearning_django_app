@@ -1,0 +1,103 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 border-top border-4 border-primary">
+            
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h4 class="mb-0 fw-bold text-primary">
+                    Live Course Chat
+                </h4>
+                <span class="badge bg-secondary fs-6">Room ID: {{ room_name }}</span>
+            </div>
+            
+            <div class="card-body bg-light">
+                <div id="chat-log" class="form-control bg-white mb-3 shadow-sm p-3" style="height: 300px; overflow-y: auto;"></div>
+                
+                <div class="input-group shadow-sm">
+                    <input id="chat-message-input" type="text" class="form-control form-control-lg" placeholder="Type your message here...">
+                    <button id="chat-message-submit" class="btn btn-primary px-4 fw-bold" type="button">Send</button>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-white text-center py-3 border-0">
+                <button onclick="window.history.back()" class="btn btn-outline-secondary btn-sm">Leave Chat & Go Back</button>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{{ room_name|json_script:"room-name" }}
+
+<script>
+    const roomName = JSON.parse(document.getElementById('room-name').textContent);
+    const currentUser = "{{ user.real_name|default:user.username|escapejs }}";
+
+    //opens the tunnel to daphne and redis
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/' + roomName + '/'
+    );
+
+    //when a message arrive
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const chatLog = document.querySelector('#chat-log');
+
+        //left/right flex container alignment
+        const wrapperDiv = document.createElement('div');
+        wrapperDiv.classList.add('d-flex', 'mb-3');
+        
+        //create the colored chat bubble
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.classList.add('p-2', 'rounded', 'shadow-sm', 'text-break');
+        bubbleDiv.style.maxWidth = '70%';
+        
+        //style based on who sent the message
+        if (data.username === currentUser) {
+            //owm messages align right, blue Background, white Text
+            wrapperDiv.classList.add('justify-content-end');
+            bubbleDiv.classList.add('bg-primary', 'text-white');
+            bubbleDiv.innerHTML = `<strong>You:</strong><br>${data.message}`;
+        } else {
+            //other user messages align left, light gray background, dark text
+            wrapperDiv.classList.add('justify-content-start');
+            bubbleDiv.classList.add('bg-light', 'text-dark', 'border');
+            bubbleDiv.innerHTML = `<small class="text-muted fw-bold d-block mb-1">${data.username}</small>${data.message}`;
+        }
+        
+        wrapperDiv.appendChild(bubbleDiv);
+        chatLog.appendChild(wrapperDiv);
+        
+        //auto-scroll to bottom
+        chatLog.scrollTop = chatLog.scrollHeight; 
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.keyCode === 13) {  //enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    //when you click send
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        
+        //only send message is not totally empty
+        if (message.trim() !== "") {
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'username': currentUser,
+            }));
+            messageInputDom.value = '';
+        }
+    };
+</script>
+{% endblock %}

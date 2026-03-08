@@ -1,0 +1,97 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="card-title fw-bold mb-0">Students Enrolled in: {{ course.title }}</h3>
+                    <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-secondary">Back to Course</a>
+                </div>
+                
+                <div class="row mb-3 align-items-center">
+                    <div class="col-md-6 mb-2 mb-md-0">
+                        <span class="fs-5">
+                            <strong>Total Students:</strong> 
+                            <span class="badge bg-primary rounded-pill ms-1">{{ course.students.count }}</span>
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" id="studentSearch" class="form-control" onkeyup="filterStudents()" placeholder="Search for student names...">
+                    </div>
+                </div>
+
+                <div class="table-responsive mt-4">
+                    <table class="table table-hover align-middle border">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Date Joined</th> 
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTable">
+                            {% for enrollment in course.enrollment_set.all %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if enrollment.student.user.profile_photo %}
+                                                <img src="{{ enrollment.student.user.profile_photo.url }}" width="40" height="40" class="rounded-circle me-3 border" style="object-fit: cover;">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle me-3 d-flex justify-content-center align-items-center text-white" style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-person"></i>
+                                                </div>
+                                            {% endif %}
+                                            <span class="fw-bold">{{ enrollment.student.user.real_name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ enrollment.student.user.email }}</td>
+                                    
+                                    <td><span class="text-muted">{{ enrollment.date_joined|date:"M d, Y" }}</span></td>
+                                    
+                                    <td class="text-center">
+                                        <form action="{% url 'remove_student' course.id enrollment.student.pk %}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to remove {{ enrollment.student.user.real_name }} from this course?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger shadow-sm">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted fst-italic">No students enrolled yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search filter function remains exactly the same!
+function filterStudents() {
+  var input, filter, table, tr, td, i, txtValue;
+  input = document.getElementById("studentSearch");
+  filter = input.value.toUpperCase();
+  table = document.getElementById("studentTable");
+  tr = table.getElementsByTagName("tr");
+  for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[0];
+    if (td) {
+      txtValue = td.textContent || td.innerText;
+      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }       
+  }
+}
+</script>
+{% endblock %}

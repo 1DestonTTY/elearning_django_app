@@ -1,0 +1,62 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <h2>Available Courses</h2>
+    <a href="{% url 'home' %}" class="btn btn-outline-dark">Back to Dashboard</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="get" class="d-flex shadow-sm">
+            <input type="text" name="q" class="form-control me-2" placeholder="Search courses..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+    {% for course in courses %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 bg-white">
+                <div class="card-body">
+                    <h4 class="card-title">
+                        <a href="{% url 'course_detail' course.id %}" class="text-decoration-none text-dark fw-bold">
+                            {{ course.title }}
+                        </a>
+                    </h4>
+                    <h6 class="card-subtitle mb-3 text-muted">Teacher: {{ course.teacher.user.real_name }}</h6>
+                    
+                    <p class="card-text text-secondary">{{ course.description|truncatewords:20 }}</p>
+                </div>
+                
+                <div class="card-footer bg-light border-top-0 d-flex justify-content-between align-items-center">
+                    
+                    {% if user.is_student %}
+                        {% if user.student in course.students.all %}
+                            <span class="badge bg-success py-2 px-3">Already Enrolled</span>
+                            <a href="{% url 'course_detail' course.id %}" class="btn btn-sm btn-outline-secondary">View Details</a>
+                        {% else %}
+                            <a href="{% url 'enroll_course' course.id %}" class="btn btn-sm btn-primary w-100">Enroll Now</a>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if user.is_teacher and course.teacher == user.teacher %}
+                        <span class="text-muted small fw-bold">Enrolled: {{ course.students.count }}</span>
+                        <a href="{% url 'course_detail' course.id %}" class="btn btn-sm btn-primary">Manage Course</a>
+                    {% elif user.is_teacher %}
+                        <a href="{% url 'course_detail' course.id %}" class="btn btn-sm btn-outline-secondary w-100">View Details</a>
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info shadow-sm" role="alert">
+                No courses found matching your search.
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
